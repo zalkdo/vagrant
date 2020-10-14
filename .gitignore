@@ -1,5 +1,7 @@
 ﻿ansible/.vagrant
 centos/.vagrant
+bionic/.vagrant
+fedora/.vagrant
 *.zip
 *.BAK
 debug.log
