@@ -1,0 +1,42 @@
+---
+- name: Ansible Setting
+  hosts: localhost
+  gather_facts: no
+  #remote_user: vagrant
+  become: yes
+  #become_method: sudo
+
+  tasks:
+     - name: Add client "/etc/hosts"
+       blockinfile: |
+         dest=/etc/hosts
+         content="
+           192.168.137.101 kube-master
+           192.168.137.102 kube-node01
+           192.168.137.103 kube-node02"
+
+     - name: Add Ansible-host client "/etc/ansible/hosts"
+       blockinfile: |
+         dest=/etc/ansible/hosts
+         content="
+           [master]
+           kube-master
+           [nodes]
+           kube-node01
+           kube-node02"
+
+     - name: Install sshpass
+       package:
+          name: sshpass
+          state: latest
+      
+     - name: Change sshd_config
+       replace:
+          dest: /etc/ssh/sshd_config
+          regexp: "PasswordAuthentication no"
+          replace: "PasswordAuthentication yes"
+
+     - name: Restart sshd
+       service:
+          name: sshd
+          state: restarted

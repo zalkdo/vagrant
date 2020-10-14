@@ -1,0 +1,151 @@
+---
+- name: Ubuntu Install Docker
+#  hosts: ubuntu
+  hosts: all
+  remote_user: vagrant
+  gather_facts: no
+  become: yes
+  become_method: sudo
+
+  vars:
+    DOCKER_PACKAGES:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg-agent
+      - software-properties-common
+
+  tasks:
+     - name: Update apt packages
+       apt:
+         update_cache: "yes"
+         force_apt_get: "yes"
+         
+     - name: Install packages needed for Docker
+       apt:
+         name: "{{ DOCKER_PACKAGES }}"
+         state: present
+         force_apt_get: "yes"
+
+     - name: Add Docker GPG apt Key
+       apt_key:
+         url: https://download.docker.com/linux/ubuntu/gpg
+         state: present
+
+     - name: Save the current Ubuntu release version into a variable
+       shell: lsb_release -cs
+       register: ubuntu_version
+    
+     - name: Add Docker Repository
+       apt_repository:
+         repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ubuntu_version.stdout }} stable"
+         state: present
+
+     - name: Update apt packages
+       apt:
+         update_cache: "yes"
+         force_apt_get: "yes"
+
+     - name: docker install
+       apt: 
+         pkg: 
+            - docker-ce
+            - docker-ce-cli
+            - containerd.io
+         state: present
+         force_apt_get: "yes"
+
+- name: CentOS Install Docker
+  hosts: centos
+  remote_user: vagrant
+  gather_facts: no
+  become: yes
+
+  tasks:
+     - name: yum-utils install
+       yum:
+         name: yum-utils
+#
+#     - name: Add repository
+#       yum_repository:
+#         name: docker
+#         description: Docker-ce repo
+#         baseurl: https://download.docker.com/linux/centos/docker-ce.repo
+
+     - name: docker repository add
+       shell: "yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo"
+
+     - name: docker install
+       yum: 
+         pkg: 
+            - docker-ce
+            - docker-ce-cli
+            - containerd.io
+         state: latest
+
+#     - name: start docker
+#       command: systemctl start docker
+
+#     - name: enable docker
+#       command: systemctl enable docker
+
+#     - name: add usergroup 
+#       command: usermod -aG docker vagrant
+
+- name: Fedora Install Docker
+  hosts: fedora
+  remote_user: vagrant
+  gather_facts: no
+  become: yes
+
+  tasks:
+     - name: dnf-plugins-core install
+       dnf:
+         name: dnf-plugins-core
+
+     - name: docker repository add
+       shell: "dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo"
+
+     - name: docker install
+       dnf: 
+         pkg: 
+            - docker-ce
+            - docker-ce-cli
+            - containerd.io
+         state: latest
+
+- name: After Installed Docker
+  hosts: all
+  remote_user: vagrant
+  gather_facts: no
+  become: yes
+  
+  vars:
+    USER: "vagrant"
+    CTOP_VERSION: "0.7.3"
+    DOCKER_COMPOSE_VERSION: "1.27.1"
+
+  tasks:
+     - name: Adding user {{ USER }} to docker group  
+       user:
+         name: "{{ USER }}"
+         groups: "docker"
+         append: "yes"
+
+     - name: start docker
+       command: systemctl start docker
+       
+     - name: enable docker
+       command: systemctl enable docker
+
+     - name: Install Docker Compose
+       get_url:
+         url: https://github.com/docker/compose/releases/download/{{ DOCKER_COMPOSE_VERSION }}/docker-compose-Linux-x86_64
+         dest: "/usr/local/bin/docker-compose"
+         mode: 0755
+
+     - name: Install Ctop
+       get_url:
+         url: https://github.com/bcicen/ctop/releases/download/v{{ CTOP_VERSION }}/ctop-{{ CTOP_VERSION }}-linux-amd64
+         dest: "/usr/local/bin/ctop"
+         mode: 0755

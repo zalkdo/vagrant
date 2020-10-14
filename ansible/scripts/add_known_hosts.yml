@@ -1,0 +1,18 @@
+#ansible-playbook -i inventory add_known_hosts.yml -k
+---
+- hosts: all
+  connection: local
+  serial: 1                 #여러 호스트를 동시에 처리하지 않고 한 호스트씩 처리
+  gather_facts: no
+
+  tasks:
+  - command: /usr/bin/ssh-keyscan -t ecdsa {{ ansible_host }} 
+    register: keyscan               #command로 확인된 node의 키 값을 keyscan이라는 변수에 저장
+
+  - name: Add KnownHosts
+    lineinfile:
+      path=~/.ssh/known_hosts 
+      create=yes
+      line={{ item }}
+    with_items:
+      - "{{ keyscan.stdout_lines }}"
