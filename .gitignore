@@ -1,0 +1,5 @@
+﻿ansible/.vagrant
+centos/.vagrant
+*.zip
+*.BAK
+debug.log
