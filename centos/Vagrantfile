@@ -1,0 +1,13 @@
+Vagrant.configure("2") do |config|      #Vagrant version
+  config.vm.define:"vg-cent" do |cfg|   # 가상머신 이름 " vagrant ssh" 에서 사용
+    cfg.vm.box = "centos/7"
+    cfg.vm.provider :hyperv do |h|
+      h.vmname = "vg-cent"              # hyperv에서 보여질 가상머신 이름
+    end
+    cfg.vm.host_name="vg-cent"          # centos에서 설정될 hostname
+    cfg.vm.synced_folder ".", "/vagrant", disabled: true #Host와 가상머신의 디렉토리 공유 사용안함
+    cfg.vm.provision "shell", path: "./scripts/configure-static-ip.sh"
+    cfg.vm.provision "shell", path: "./scripts/client_sshd_setting.sh"
+    cfg.vm.provision "shell", inline: "systemctl restart network"
+  end
+end
